@@ -1,18 +1,44 @@
 const express = require("express");
 const { graphqlHTTP } = require("express-graphql");
-const { GraphQLSchema, GraphQLObjectType, GraphQLString } = require("graphql");
+const {
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLString,
+  GraphQLList,
+  GraphQLInt,
+  GraphQLNonNull,
+} = require("graphql");
+const { authors, books } = require("./sampleData");
 const app = express();
+const port = process.env.PORT || 8080;
 
-const schema = new GraphQLSchema({
-  query: new GraphQLObjectType({
-    name: "HelloWorld",
-    fields: () => ({
-      message: { type: GraphQLString, resolve: () => "Hello World" },
-    }),
+const BookType = new GraphQLObjectType({
+  name: "Book",
+  description: "This is a book written by an author",
+  fields: () => ({
+    id: {
+      type: GraphQLNonNull(GraphQLInt),
+    },
+    name: { type: GraphQLNonNull(GraphQLString) },
+    authorId: { type: GraphQLNonNull(GraphQLInt) },
   }),
 });
 
-const port = process.env.PORT || 8080;
+const RootQueryType = new GraphQLObjectType({
+  name: "Query",
+  description: "Root Query",
+  fields: () => ({
+    books: {
+      type: new GraphQLList(BookType),
+      description: "List of all Books",
+      resolve: () => books,
+    },
+  }),
+});
+
+const schema = new GraphQLSchema({
+  query: RootQueryType,
+});
 
 app.use(
   "/graphQL",
@@ -22,7 +48,7 @@ app.use(
   })
 );
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send(JSON.stringify(authors));
 });
 
 app.listen(port, () => {
