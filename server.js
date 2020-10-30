@@ -12,6 +12,22 @@ const { authors, books } = require("./sampleData");
 const app = express();
 const port = process.env.PORT || 8080;
 
+const AuthorType = new GraphQLObjectType({
+  name: "Author",
+  description: "Author of a book",
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    name: { type: GraphQLNonNull(GraphQLString) },
+
+    books: {
+      type: new GraphQLList(BookType),
+      resolve: (author) => {
+        return books.filter((book) => book.authorId === author.id);
+      },
+    },
+  }),
+});
+
 const BookType = new GraphQLObjectType({
   name: "Book",
   description: "This is a book written by an author",
@@ -21,6 +37,12 @@ const BookType = new GraphQLObjectType({
     },
     name: { type: GraphQLNonNull(GraphQLString) },
     authorId: { type: GraphQLNonNull(GraphQLInt) },
+    author: {
+      type: AuthorType,
+      resolve: (book) => {
+        return authors.find((author) => author.id === book.authorId);
+      },
+    },
   }),
 });
 
@@ -32,6 +54,11 @@ const RootQueryType = new GraphQLObjectType({
       type: new GraphQLList(BookType),
       description: "List of all Books",
       resolve: () => books,
+    },
+    authors: {
+      type: new GraphQLList(AuthorType),
+      description: "List of All Authors",
+      resolve: () => authors,
     },
   }),
 });
